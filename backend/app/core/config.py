@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     
     # App
     APP_NAME: str = "AI Image Gen"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = "0.2.0"
     DEBUG: bool = True
     API_PREFIX: str = "/api/v1"
 
