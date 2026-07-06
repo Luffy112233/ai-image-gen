@@ -27,12 +27,12 @@ function loadGallery(): Array<{ url?: string; b64_json?: string; prompt: string;
   return []
 }
 
-// 保存图片到 localStorage（只存 URL，b64 太大不存）
+// 保存图片到 localStorage（只存有 url 的图片，忽略 b64_json 避免超限）
 function saveGallery(images: Array<{ url?: string; b64_json?: string; prompt: string; model?: string; size?: string; createdAt: string }>) {
   try {
-    // 过滤掉没有 URL 的记录（b64 太大，localStorage 存不下）
+    // 只保留有 url 的图片（b64_json 太大，localStorage 存不下）
     const withUrl = images.filter(img => img.url && img.url.length > 0)
-    console.log('[GALLERY] Saving', withUrl.length, 'images to localStorage')
+    console.log('[GALLERY] Images with URL:', withUrl.length)
     // 按时间倒序排列，保留最近 50 张
     const sorted = withUrl.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 50)
     const jsonStr = JSON.stringify(sorted)
@@ -49,6 +49,7 @@ function saveGallery(images: Array<{ url?: string; b64_json?: string; prompt: st
 
 interface GenerationTask {
   id: string
+  backendTaskId: string | null
   request: GenerationRequest
   result: GenerationResult | null
   status: 'pending' | 'generating' | 'completed' | 'failed' | 'cancelled'
@@ -254,8 +255,8 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
       console.log('[STORE] Image entry:', { url: newImages[0]?.url, urlLen: newImages[0]?.url?.length, prompt: newImages[0]?.prompt })
       const updatedGallery = [...newImages, ...gallery]
       console.log('[STORE] Updated gallery size:', updatedGallery.length)
-      // 只存有效的 URL，不存 b64_json
-      const persistedGallery = updatedGallery.filter(img => img.url && img.url.startsWith('http')).slice(0, 50)
+      // 保留所有有效图片（有 url 或 b64_json 的都保留），最多50张
+      const persistedGallery = updatedGallery.slice(0, 50)
       console.log('[STORE] Persisted gallery (valid URLs only):', persistedGallery.length, persistedGallery.map(i => i.url?.substring(0, 60)))
       if (persistedGallery.length === 0) {
         console.warn('[STORE] No valid URLs to persist')

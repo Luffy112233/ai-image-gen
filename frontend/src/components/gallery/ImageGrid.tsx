@@ -23,9 +23,10 @@ interface ImageGridProps {
   images: GeneratedImage[]
   onDelete?: (id: string) => void
   onDownload?: (image: GeneratedImage) => void
+  onEdit?: (image: GeneratedImage) => void
 }
 
-export function ImageGrid({ images, onDelete, onDownload }: ImageGridProps) {
+export function ImageGrid({ images, onDelete, onDownload, onEdit }: ImageGridProps) {
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null)
 
   if (images.length === 0) {
@@ -70,6 +71,15 @@ export function ImageGrid({ images, onDelete, onDownload }: ImageGridProps) {
                 </div>
               </div>
             )}
+            {img.status === "completed" && !img.url && img.b64_json && (
+              <div className="relative w-full aspect-square bg-gray-800">
+                <img
+                  src={`data:image/png;base64,${img.b64_json}`}
+                  alt={img.prompt}
+                  className="w-full h-full object-cover cursor-pointer"
+                />
+              </div>
+            )}
             {img.status === "generating" && (
               <div className="w-full aspect-square flex flex-col items-center justify-center bg-gray-800">
                 <div className="text-4xl mb-2 animate-pulse">⏳</div>
@@ -107,6 +117,16 @@ export function ImageGrid({ images, onDelete, onDownload }: ImageGridProps) {
                   >
                     🔍 查看
                   </Button>
+                  {onEdit && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="bg-purple-500/50 hover:bg-purple-500/70 text-white border-0"
+                      onClick={() => onEdit(img)}
+                    >
+                      ✏️ 编辑
+                    </Button>
+                  )}
                   {onDelete && (
                     <Button
                       size="sm"

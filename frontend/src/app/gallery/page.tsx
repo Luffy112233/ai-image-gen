@@ -4,10 +4,12 @@ import { Layout } from "@/components/layout"
 import { ImageGrid } from "@/components/gallery/ImageGrid"
 import { Button } from "@/components/ui/button"
 import { useGenerationStore } from "@/stores/generation-store"
+import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 
 export default function GalleryPage() {
   const { gallery, clearGallery, deleteFromGallery } = useGenerationStore()
+  const router = useRouter()
   const [filter, setFilter] = useState<"all" | "completed">("all")
   const [mounted, setMounted] = useState(false)
 
@@ -58,6 +60,22 @@ export default function GalleryPage() {
   const handleClearAll = () => {
     if (confirm("确定要清空所有作品吗？此操作不可恢复。")) {
       clearGallery()
+    }
+  }
+
+  const handleEdit = (image: { url?: string; b64_json?: string; prompt?: string }) => {
+    // 如果有 CDN URL，直接用；否则用 sessionStorage 传递 b64
+    if (image.url) {
+      router.push(`/editor?url=${encodeURIComponent(image.url)}&prompt=${encodeURIComponent(image.prompt || "")}`)
+    } else if (image.b64_json) {
+      // 把 b64 存入 sessionStorage，编辑器读取
+      sessionStorage.setItem('editor_pending_edit', JSON.stringify({
+        b64: image.b64_json,
+        prompt: image.prompt || ''
+      }))
+      router.push('/editor')
+    } else {
+      alert('该图片没有可用的数据，无法编辑。')
     }
   }
 
@@ -132,6 +150,7 @@ export default function GalleryPage() {
             }))}
             onDelete={(idxStr) => handleDelete(Number(idxStr))}
             onDownload={handleDownload}
+            onEdit={(img) => handleEdit(img)}
           />
         )}
       </div>
