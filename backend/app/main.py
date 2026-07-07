@@ -59,10 +59,11 @@ async def health():
 
 
 # ── Register API routers ──────────────────────────────────
-from app.api import generations, uploads, downloads, auth
+from app.api import generations, uploads, downloads, auth, api_configs
 app.include_router(generations.router, prefix="/api/v1/generation")
 app.include_router(uploads.router, prefix="/api/v1/upload")
 app.include_router(downloads.router, prefix="/api/v1/download")
+app.include_router(api_configs.router)
 
 # ── Auth routes ───────────────────────────────────────────
 app.include_router(auth.router, prefix="/api/v1/auth")

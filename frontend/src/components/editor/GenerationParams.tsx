@@ -19,6 +19,7 @@ interface GenerationParams {
   seed: number | null
   guidanceScale: number
   enableAdvanced: boolean
+  availableModels: string[]
 }
 
 export function GenerationParams({
@@ -26,11 +27,13 @@ export function GenerationParams({
   onChange,
   onGenerate,
   isGenerating,
+  availableModels,
 }: {
   params: GenerationParams
   onChange: (updates: Partial<GenerationParams>) => void
   onGenerate: () => void
   isGenerating: boolean
+  availableModels: string[]
 }) {
   return (
     <Card className="border-gray-800 bg-gray-900/50">
@@ -69,7 +72,15 @@ export function GenerationParams({
               onChange={(e) => onChange({ model: e.target.value })}
               className="bg-gray-800 border-gray-700 text-white"
             >
-              <option value="gpt-image-2">gpt-image-2</option>
+              {availableModels.length > 0 ? (
+                availableModels.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))
+              ) : (
+                <option value="">加载中...</option>
+              )}
             </Select>
           </div>
           <div className="space-y-2">

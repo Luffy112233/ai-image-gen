@@ -10,10 +10,11 @@ import { useState, useEffect, useCallback } from "react"
 export default function GeneratePage() {
   const { tasks, addTask, startGeneration, clearTasks, isGenerating, updateProgress, cancelTask } = useGenerationStore()
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [availableModels, setAvailableModels] = useState<string[]>([])
   const [params, setParams] = useState({
     prompt: "",
     negativePrompt: "",
-    model: "gpt-image-2",
+    model: "",
     size: "1024x1024",
     numImages: 1,
     seed: null as number | null,
@@ -22,6 +23,33 @@ export default function GeneratePage() {
   })
   const [generating, setGenerating] = useState(false)
 
+  // 加载可用模型
+  useEffect(() => {
+    loadModels()
+  }, [])
+
+  const loadModels = async () => {
+    try {
+      const res = await fetch("/api/v1/generation/models")
+      const data = await res.json()
+      // 合并所有模型的列表
+      const models = new Set<string>()
+      for (const adapter of data.models || []) {
+        for (const m of (adapter.models || [])) {
+          models.add(m)
+        }
+      }
+      if (models.size > 0) {
+        setAvailableModels(Array.from(models))
+        // 如果当前没有选中的模型，自动选择第一个
+        if (!params.model) {
+          setParams(prev => ({ ...prev, model: Array.from(models)[0] }))
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load models:", err)
+    }
+  }
   // Poll for task status as fallback — 使用 backendTaskId 而不是 task.id
   useEffect(() => {
     const activeTasks = tasks.filter(t => ['pending', 'generating'].includes(t.status) && t.backendTaskId)
@@ -167,6 +195,7 @@ export default function GeneratePage() {
               onChange={(updates) => setParams({ ...params, ...updates })}
               onGenerate={handleGenerate}
               isGenerating={generating}
+              availableModels={availableModels}
             />
 
             {/* Clear All */}

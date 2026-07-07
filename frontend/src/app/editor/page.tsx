@@ -19,6 +19,31 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [resultImage, setResultImage] = useState<string | null>(null)
+  const [selectedModel, setSelectedModel] = useState("")
+  const [availableModels, setAvailableModels] = useState<string[]>([])
+
+  // 加载可用模型
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        const res = await fetch("/api/v1/generation/models")
+        const data = await res.json()
+        const models = new Set<string>()
+        for (const adapter of data.models || []) {
+          for (const m of (adapter.models || [])) {
+            models.add(m)
+          }
+        }
+        if (models.size > 0) {
+          setAvailableModels(Array.from(models))
+          setSelectedModel(Array.from(models)[0])
+        }
+      } catch (err) {
+        console.error("Failed to load models:", err)
+      }
+    }
+    loadModels()
+  }, [])
 
   // 从 URL 参数或 sessionStorage 预加载图片
   useEffect(() => {
@@ -81,7 +106,7 @@ export default function EditorPage() {
       // 先创建任务
       const taskId = addTask({
         prompt: prompt,
-        model: "gpt-image-2",
+        model: selectedModel || "gpt-image-2",
         size: "1024x1024",
         n: 1,
         image_url: imageData,
@@ -153,6 +178,24 @@ export default function EditorPage() {
                   placeholder="描述你想要的编辑效果，例如：把背景换成星空..."
                   className="min-h-[80px] bg-gray-800 border-gray-700 text-white"
                 />
+              </div>
+
+              {/* Model Selection */}
+              <div className="space-y-2">
+                <label className="text-sm text-gray-400">模型</label>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 text-white rounded px-3 py-2"
+                >
+                  {availableModels.length > 0 ? (
+                    availableModels.map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))
+                  ) : (
+                    <option value="">加载中...</option>
+                  )}
+                </select>
               </div>
 
               <div className="flex flex-wrap gap-2">
