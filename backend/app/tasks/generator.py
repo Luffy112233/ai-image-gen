@@ -28,7 +28,7 @@ def _update_progress(task_id: str, progress: int, status: str = "generating", im
     }
 
 
-async def _generate_single(request_data: dict, provider: str = "proxy"):
+async def _generate_single(request_data: dict, provider: str = None):
     """Generate a single image asynchronously."""
     task_id = request_data.get("task_id", str(uuid.uuid4())[:12])
     _update_progress(task_id, 0, "pending")
@@ -41,8 +41,16 @@ async def _generate_single(request_data: dict, provider: str = "proxy"):
         _update_progress(task_id, 20, "generating")
         print(f"[GENERATOR] Creating adapter")
         
-        adapter = get_adapter(provider)
-        print(f"[GENERATOR] Calling adapter.generate()...")
+        # 使用活跃适配器（provider 为 None 时使用当前活跃配置）
+        from app.adapters.factory import ADAPTERS
+        if provider and provider in ADAPTERS:
+            adapter = ADAPTERS[provider]
+        elif len(ADAPTERS) > 0:
+            # 使用第一个（活跃）适配器
+            adapter = list(ADAPTERS.values())[0]
+        else:
+            raise ValueError("No adapters available")
+        print(f"[GENERATOR] Using adapter: {adapter.name}, models: {adapter.supported_models}")
         
         # Run sync adapter.generate() in executor to avoid blocking
         loop = asyncio.get_event_loop()

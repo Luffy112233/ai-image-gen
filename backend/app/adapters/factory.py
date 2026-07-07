@@ -19,12 +19,19 @@ def init_adapters():
     # 首先尝试从数据库加载活跃配置
     active_config = get_active_config()
     if active_config:
-        ADAPTERS[active_config["id"]] = DynamicApiAdapter(
+        adapter = DynamicApiAdapter(
             config_id=active_config["id"],
             name=active_config["name"],
             api_url=active_config["api_url"],
             api_key=active_config["api_key"],
         )
+        # 自动探测模型列表
+        try:
+            models = adapter.discover_models()
+            print(f"[FACTORY] Discovered {len(models)} models for '{active_config['name']}'")
+        except Exception as e:
+            print(f"[FACTORY] Model discovery failed for '{active_config['name']}': {e}")
+        ADAPTERS[active_config["id"]] = adapter
         print(f"[FACTORY] Loaded active config: {active_config['name']}")
         return
     
@@ -58,5 +65,6 @@ def list_available_adapters() -> list[dict]:
 
 def reload_adapters():
     """重新加载适配器（用于配置变更后）。"""
+    global ADAPTERS
     ADAPTERS.clear()
     init_adapters()
